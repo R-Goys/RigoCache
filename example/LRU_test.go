@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"github.com/R-Goys/RigoCache/LRU"
+	"github.com/R-Goys/RigoCache/pkg/LRU"
 	"testing"
 )
 

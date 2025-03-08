@@ -17,7 +17,7 @@ func Test_http(t *testing.T) {
 		log.Println("[slowDB] key not found")
 		return nil, nil
 	}
-	Rigo.NewGroup("score", getter, 12)
+	Rigo.NewGroup("score", getter, 7)
 	addr := "localhost:8080"
 	srv := RigoHTTP.NewHttpPool(addr)
 	log.Println("[HTTP srv] start in", addr)

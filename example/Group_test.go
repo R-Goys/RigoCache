@@ -21,7 +21,7 @@ func Test_group(T *testing.T) {
 		}
 		return nil, nil
 	}
-	g := Rigo.NewGroup("hajimi", getter, 20)
+	g := Rigo.NewGroup("hajimi", getter, 7)
 	for k, v := range db {
 		if _, err := g.Get(k); err == nil {
 			fmt.Println("cache miss", k, v)

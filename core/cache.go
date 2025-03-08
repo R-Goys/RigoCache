@@ -1,7 +1,7 @@
 package Rigo
 
 import (
-	"github.com/R-Goys/RigoCache/LRU"
+	"github.com/R-Goys/RigoCache/pkg/LRU"
 	"sync"
 )
 
