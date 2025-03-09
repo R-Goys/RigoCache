@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package=".;pb";
+
+message GetRequest {
+  string Group = 1;
+  string Key = 2;
+}
+
+message GetResponse {
+  bytes Value = 1;
+}
+
+service RigoCache {
+  rpc Get(GetRequest) returns(GetResponse);
+}

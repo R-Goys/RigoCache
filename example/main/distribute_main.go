@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	Rigo "github.com/R-Goys/RigoCache/core"
-	RigoHTTP "github.com/R-Goys/RigoCache/http"
+	Rigo2 "github.com/R-Goys/RigoCache/internal/core"
+	"github.com/R-Goys/RigoCache/internal/http"
 	"log"
 	"net/http"
 )
@@ -15,8 +15,8 @@ var db = map[string]string{
 	"John": "8910",
 }
 
-func CreateGroup(name string) *Rigo.Group {
-	return Rigo.NewGroup(name, Rigo.GetterFunc(
+func CreateGroup(name string) *Rigo2.Group {
+	return Rigo2.NewGroup(name, Rigo2.GetterFunc(
 		func(key string) ([]byte, error) {
 			log.Println("[SlowDB] search key", key)
 			if v, ok := db[key]; ok {
@@ -30,7 +30,7 @@ func CreateGroup(name string) *Rigo.Group {
 // 同时他也能提供http服务，在函数的最后，会启动这个服务，用于通信
 // 这里仅仅只有一个Group，但是存在多个节点，相当于这个Group的
 // 不同kv键值对被缓存到了不同的节点上，于是就需要我们利用这个选择器来进行选择。
-func startCacheServer(apiAddr string, addr string, addrs []string, g *Rigo.Group) {
+func startCacheServer(apiAddr string, addr string, addrs []string, g *Rigo2.Group) {
 	peers := RigoHTTP.NewHttpPool(apiAddr)
 	peers.Set(addrs...)
 	g.RegisterPeers(peers)
@@ -39,7 +39,7 @@ func startCacheServer(apiAddr string, addr string, addrs []string, g *Rigo.Group
 }
 
 // 这里和上面启动的http服务不一样，这里是暴露给用户的。
-func startAPIServer(apiAddr string, g *Rigo.Group) {
+func startAPIServer(apiAddr string, g *Rigo2.Group) {
 	http.Handle("/api", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			key := r.URL.Query().Get("key")

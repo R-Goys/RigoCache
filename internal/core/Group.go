@@ -1,6 +1,8 @@
 package Rigo
 
 import (
+	"context"
+	"github.com/R-Goys/RigoCache/internal/rpc"
 	"github.com/R-Goys/RigoCache/pkg/consistenthash"
 	"log"
 	"sync"
@@ -20,6 +22,25 @@ var (
 	groups = make(map[string]*Group)
 )
 
+var DataBase = map[string]string{
+	"John":     "111",
+	"Doe":      "222",
+	"Steve":    "333",
+	"Sam":      "444",
+	"Lance":    "555",
+	"lanLance": "666",
+	"Noname":   "777",
+}
+
+var fn GetterFunc = func(key string) ([]byte, error) {
+	log.Println("[SlowDB] Search ", key)
+	if v, ok := DataBase[key]; ok {
+		return []byte(v), nil
+	}
+	log.Println("[SlowDB] Not found ", key)
+	return nil, nil
+}
+
 func NewGroup(name string, getter Getter, cacheBytes int64) *Group {
 	g := &Group{
 		name:   name,
@@ -27,6 +48,9 @@ func NewGroup(name string, getter Getter, cacheBytes int64) *Group {
 		mainCache: cache{
 			cacheBytes: cacheBytes,
 		},
+	}
+	if g.getter == nil {
+		g.getter = fn
 	}
 	mu.Lock()
 	groups[name] = g
@@ -59,10 +83,10 @@ func (g *Group) Get(key string) (ByteView, error) {
 		return v, nil
 	}
 
-	return g.load(key)
+	return g.GetLocally(key)
 }
 
-func (g *Group) load(key string) (ByteView, error) {
+func (g *Group) Pick(key string) (ByteView, error) {
 	if g.Peers != nil {
 		log.Printf("[Server %s] Loading %s", g.name, key)
 		//这里先选择一个可供使用的客户端PeerGetter
@@ -92,11 +116,15 @@ func (g *Group) GetLocally(key string) (ByteView, error) {
 }
 
 func (g *Group) getFromPeer(peer consistenthash.PeerGetter, key string) (ByteView, error) {
-	bytes, err := peer.Get(g.name, key)
+	req := &pb.GetRequest{
+		Group: g.name,
+		Key:   key,
+	}
+	res, err := peer.Get(context.Background(), req)
 	if err != nil {
 		return ByteView{}, err
 	}
-	return ByteView{b: cloneBytes(bytes)}, err
+	return ByteView{b: res.Value}, err
 }
 
 func (g *Group) populateCache(key string, value ByteView) {

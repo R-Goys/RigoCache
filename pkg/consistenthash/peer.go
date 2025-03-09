@@ -1,7 +1,12 @@
 package consistenthash
 
+import (
+	"context"
+	"github.com/R-Goys/RigoCache/internal/rpc"
+)
+
 type PeerGetter interface {
-	Get(group string, key string) ([]byte, error)
+	Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error)
 }
 
 type PeerPicker interface {

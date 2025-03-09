@@ -39,6 +39,21 @@ func (m *Map) Add(keys ...string) {
 	sort.Ints(m.keys)
 }
 
+func (m *Map) Remove(key string) {
+	for i := 0; i < m.replicas; i++ {
+		hash := int(m.hash([]byte(strconv.Itoa(i) + key)))
+		delete(m.hashMap, hash)
+		for index, val := range m.keys {
+			if val == hash {
+				m.keys = append(m.keys[:index], m.keys[index+1:]...)
+				break
+			}
+		}
+	}
+
+	sort.Ints(m.keys)
+}
+
 func (m *Map) Get(key string) string {
 	if len(m.keys) == 0 {
 		return ""
