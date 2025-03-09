@@ -19,8 +19,3 @@ func (c CacheService) Get(_ context.Context, request *pb.GetRequest) (*pb.GetRes
 		Value: v.ByteSlice(),
 	}, nil
 }
-
-func (c CacheService) mustEmbedUnimplementedRigoCacheServer() {
-	//TODO implement me
-	panic("implement me")
-}
