@@ -64,20 +64,24 @@ func (g *Group) Get(key string) (ByteView, error) {
 
 func (g *Group) load(key string) (ByteView, error) {
 	if g.Peers != nil {
+		log.Printf("[Server %s] Loading %s", g.name, key)
 		//这里先选择一个可供使用的客户端PeerGetter
 		if peer, ok := g.Peers.PickPeer(key); ok {
 			//利用选择的客户端拿数据
-			if value, err := g.getFromPeer(peer, key); err == nil {
+			value, err := g.getFromPeer(peer, key)
+			if err == nil {
+				log.Println("利用客户端拿到了数据")
 				return value, nil
 			}
-			log.Fatalf("[Server %s] Failed to get from peers", g.name)
+			log.Printf("[Server %s] Failed to get from peers %s\n", g.name, err.Error())
 		}
 	}
-	return g.getLocally(key)
+	log.Printf("在本地找")
+	return g.GetLocally(key)
 }
 
-// 从本地拿取数据
-func (g *Group) getLocally(key string) (ByteView, error) {
+// GetLocally 从本地拿取数据
+func (g *Group) GetLocally(key string) (ByteView, error) {
 	bytes, err := g.getter.Get(key)
 	if err != nil {
 		return ByteView{}, err

@@ -2,7 +2,7 @@ package RigoHTTP
 
 import (
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -23,7 +23,7 @@ func (h *HttpGetter) Get(Group, key string) ([]byte, error) {
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("HTTP GET returned status code %d", resp.StatusCode)
 	}
-	bytes, err := io.ReadAll(resp.Body)
+	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("reading response body: %v", err)
 	}

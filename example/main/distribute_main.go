@@ -30,8 +30,8 @@ func CreateGroup(name string) *Rigo.Group {
 // 同时他也能提供http服务，在函数的最后，会启动这个服务，用于通信
 // 这里仅仅只有一个Group，但是存在多个节点，相当于这个Group的
 // 不同kv键值对被缓存到了不同的节点上，于是就需要我们利用这个选择器来进行选择。
-func startCacheServer(addr string, addrs []string, g *Rigo.Group) {
-	peers := RigoHTTP.NewHttpPool(addr)
+func startCacheServer(apiAddr string, addr string, addrs []string, g *Rigo.Group) {
+	peers := RigoHTTP.NewHttpPool(apiAddr)
 	peers.Set(addrs...)
 	g.RegisterPeers(peers)
 	log.Println("[Cache srv] server start in ", addr)
@@ -40,16 +40,34 @@ func startCacheServer(addr string, addrs []string, g *Rigo.Group) {
 
 // 这里和上面启动的http服务不一样，这里是暴露给用户的。
 func startAPIServer(apiAddr string, g *Rigo.Group) {
-	log.Println("[HTTP srv] is running at", apiAddr)
-	log.Fatal(http.ListenAndServe(apiAddr[7:], g.Peers.(*RigoHTTP.HttpPool)))
+	http.Handle("/api", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			key := r.URL.Query().Get("key")
+			view, err := g.Get(key)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Write(view.ByteSlice())
+
+		}))
+	log.Println(" server is running at", apiAddr)
+	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
 }
 
 func main() {
-	apiAddr := "http://localhost:8080"
+	//var port int
+	//var api bool
+	//flag.IntVar(&port, "port", 8001, "Geecache server port")
+	//flag.BoolVar(&api, "api", false, "Start a api server?")
+	//flag.Parse()
+
+	apiAddr := "http://localhost:10004"
 	addrMap := map[int]string{
-		8001: "http://localhost:8001",
-		8002: "http://localhost:8002",
-		8003: "http://localhost:8003",
+		8001: "http://localhost:10001",
+		8002: "http://localhost:10002",
+		8003: "http://localhost:10003",
 	}
 
 	var addrs []string
@@ -57,9 +75,9 @@ func main() {
 		addrs = append(addrs, v)
 	}
 
-	gee := CreateGroup("score")
-	for _, v := range addrMap {
-		go startCacheServer(v, addrs, gee)
+	Rigo := CreateGroup("score")
+	if true {
+		go startAPIServer(apiAddr, Rigo)
 	}
-	startAPIServer(apiAddr, gee)
+	startCacheServer(apiAddr, addrMap[8001], []string{addrMap[8001]}, Rigo)
 }
